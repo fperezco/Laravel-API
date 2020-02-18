@@ -30,4 +30,15 @@ class VideoCategory extends Model
 
         return $this;
     }
+
+    //relationships
+
+    public function user()
+    {
+        return $this->belongsTo('App\User', 'user_id');
+    }
+
+    public function videos(){
+        return $this->hasMany('App\Video','videocategory_id');
+    }
 }

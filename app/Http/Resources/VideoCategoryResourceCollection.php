@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class VideoResourceCollection extends ResourceCollection
+class VideoCategoryResourceCollection extends ResourceCollection
 {
     protected $embedRelationships;
 
@@ -16,7 +16,7 @@ class VideoResourceCollection extends ResourceCollection
 
     public function toArray($request)
     {
-        return $this->collection->map(function (VideoResource $resource) use ($request) {
+        return $this->collection->map(function (VideoCategoryResource $resource) use ($request) {
             return $resource->setEmbedRelationships($this->embedRelationships)->toArray($request);
         })->all();
 

@@ -113,4 +113,16 @@ class User extends Authenticatable
 
         return $this;
     }
+
+    //relationships
+
+    public function videocategories()
+    {
+        return $this->hasMany('App\VideoCategory', 'user_id');
+    }
+
+    public function videos()
+    {
+        return $this->hasMany('App\Video', 'user_id');
+    }
 }
