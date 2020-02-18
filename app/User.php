@@ -2,12 +2,14 @@
 
 namespace App;
 
+use App\Traits\OrderByArray;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     use Notifiable;
+    use OrderByArray; //traits para acomodar los request a la api que piden ordenacion de campos
 
     /**
      * The attributes that are mass assignable.

@@ -24,8 +24,8 @@ class CreateVideosTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('videocategory_id')->references('id')->on('videocategories');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('videocategory_id')->references('id')->on('videocategories')->onDelete('cascade');
         });
     }
 

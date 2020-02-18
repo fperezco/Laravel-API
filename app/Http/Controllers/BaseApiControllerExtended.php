@@ -27,8 +27,13 @@ class BaseAPIControllerExtended extends Controller
      */
     public function index(Request $request)
     {
-        $objects = $this->repository->all($request->all());
-        return $this->sendResponse($this->resourceClass::collection($objects), $this->resourceName . ' retrieved successfully');
+        try{
+            $objects = $this->repository->all($request->all());
+            return $this->sendResponse($this->resourceClass::collection($objects), $this->resourceName . ' retrieved successfully');
+        } catch (Exception $e) {
+            return $this->sendError('Get ' . $this->resourceName . ' error', $e->getMessage());
+        }
+        
     }
 
     /**
@@ -78,6 +83,9 @@ class BaseAPIControllerExtended extends Controller
      */
     public function update(Request $request, $id)
     {
+        //estan en el index.php
+        //'Access-Control-Allow-Methods'=> 'POST, GET, OPTIONS, PUT, DELETE',
+        //'Access-Control-Allow-Headers'=> 'Content-Type, X-Auth-Token, Origin'
         try {
             $object = $this->repository->update($request->all(), $id);
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' updated successfully');
@@ -122,7 +130,7 @@ class BaseAPIControllerExtended extends Controller
      * success response method.
      * @return \Illuminate\Http\Response
      */
-    public function sendResponseWithExtraObject($result, $extraObjectName,$extraObject, $message)
+    public function sendResponseWithExtraObject($result, $extraObjectName, $extraObject, $message)
     {
         $response = [
             'success' => true,

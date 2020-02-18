@@ -2,12 +2,14 @@
 
 namespace App;
 
+use App\Traits\OrderByArray;
 use Illuminate\Database\Eloquent\Model;
 
 class VideoCategory extends Model
 {
     protected $table = 'videocategories';
-    protected $fillable = ['name'];
+    protected $fillable = ['user_id', 'name'];
+    use OrderByArray; //traits para acomodar los request a la api que piden ordenacion de campos
 
     /**
      * Get the value of name
