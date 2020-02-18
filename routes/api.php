@@ -11,6 +11,9 @@
 |
 */
 
+use App\Video;
+use Illuminate\Http\Request;
+
 Route::group(['prefix' => 'v1'], function () {
     Route::apiResource('users', 'UserController');
 
@@ -35,4 +38,8 @@ Route::group(['prefix' => 'v1'], function () {
     });
 
     Route::apiResource('videos', 'VideoController');
+
+    /* Route::get('videos', function (Request $request) {
+         dd(Video::with('videoCategory')->get());
+     });*/
 });

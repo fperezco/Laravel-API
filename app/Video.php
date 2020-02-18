@@ -22,6 +22,7 @@ class Video extends Model
 
     protected $table = 'videos';
     protected $fillable = ['user_id', 'videocategory_id', 'name', 'url', 'picture', 'description'];
+    public $embedRelationships;
 
     /**
      * Validacion en los setters de los atributos en laravel no tienen sentido los setters y getters se usa directamente el operador -> y si debemos usar setters y
@@ -46,5 +47,15 @@ class Video extends Model
         } else {
             $this->attributes['url'] = $url;
         }
+    }
+
+    public function videoCategory()
+    {
+        return $this->belongsTo('App\VideoCategory', 'videocategory_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo('App\User', 'user_id');
     }
 }

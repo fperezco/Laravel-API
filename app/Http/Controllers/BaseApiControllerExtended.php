@@ -27,13 +27,15 @@ class BaseAPIControllerExtended extends Controller
      */
     public function index(Request $request)
     {
-        try{
+        // le paso el indice embed de
+        // http://127.0.0.1:8000/api/v1/videos?fields=id,subject,customer_name,updated_at&state;=open&sort;=-updated_at&embed=user,category
+        // que me indica que relaciones incluir en la devolución
+        try {
             $objects = $this->repository->all($request->all());
-            return $this->sendResponse($this->resourceClass::collection($objects), $this->resourceName . ' retrieved successfully');
+            return $this->sendResponse($this->resourceClass::collection($objects)->setEmbedRelationships($request->get('embed')), $this->resourceName . ' retrieved successfully');
         } catch (Exception $e) {
             return $this->sendError('Get ' . $this->resourceName . ' error', $e->getMessage());
         }
-        
     }
 
     /**
