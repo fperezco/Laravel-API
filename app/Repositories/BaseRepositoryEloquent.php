@@ -26,6 +26,7 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
     //all acepta filtros
     public function all($arrayParameters = null)
     {
+        //dd($arrayParameters);
         $sortArray = [];
         $fieldsArray = '*';
         $filtersArray = [];
@@ -105,6 +106,16 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
         }
 
         return $model;
+    }
+
+    public function findByUserId($id, $userId)
+    {
+        return $this->model::where(['id' => $id, 'user_id' => $userId])->first();
+    }
+
+    public function deleteByUserId($id, $userId)
+    {
+        return $this->delete($this->findByUserId($id, $userId)->id);
     }
 
     public function random()

@@ -11,8 +11,7 @@
 |
 */
 
-use App\User;
-use Illuminate\Http\Request;
+use App\Video;
 
 Route::group(['prefix' => 'v1'], function () {
     // RUTAS LIBRES
@@ -51,7 +50,7 @@ Route::group(['prefix' => 'v1'], function () {
 
     //Route::apiResource('videos', 'VideoController');
 
-    /* Route::get('videos', function (Request $request) {
-         dd(User::find(5)->videocategories);
-     });*/
+    Route::get('test', function () {
+        dd(Video::where(['id' => 13, 'user_id' => 1])->get());
+    });
 });

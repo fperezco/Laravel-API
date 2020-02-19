@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
 use App\Interfaces\UserRepositoryInterface;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends BaseAPIControllerExtended
 {
@@ -13,7 +12,7 @@ class UserController extends BaseAPIControllerExtended
     public function __construct(UserRepositoryInterface $repo)
     {
         parent::__construct($repo, UserResource::class, 'User');
-        $this->user = JWTAuth::parseToken()->authenticate();
+        parent::getUserFromToken();
         //dd($this->user);
     }
 }

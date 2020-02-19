@@ -14,6 +14,16 @@ class LoginController extends Controller
         $token = null;
 
         if (!$token = JWTAuth::attempt($input)) {
+            // Get username id, and name for token
+            /*let body = {
+                id: testUser.id,
+                username: testUser.username,
+                firstName: testUser.firstName,
+                lastName: testUser.lastName,
+                token: 'fake-jwt-token'
+            };*/
+
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid Email or Password',

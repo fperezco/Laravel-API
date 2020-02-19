@@ -8,7 +8,7 @@ use App\Video;
 use Exception;
 use Illuminate\Http\Request;
 
-class VideoController extends BaseAPIControllerExtended
+class VideoController extends BaseAPIControllerExtendedJwt
 {
     public function __construct(VideoRepositoryInterface $repo)
     {
