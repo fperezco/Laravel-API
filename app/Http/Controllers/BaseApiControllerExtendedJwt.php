@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Interfaces\BaseRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * Controlador con depedencia de un usuario JWT, los controladores que extienden de él necesitan
- * un user para su listado y creacion ( no update y delete por ids unicos)
+ * un user para su listado y creacion, update, delete y show ya que he de controlar que el user_id del token
+ * es realmente el propietario del recurso
  */
 class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
 {
@@ -22,11 +22,18 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
 
     public function __construct(BaseRepositoryInterface $repo, $resourceClass, $resourceName)
     {
-        $this->repository = $repo;
-        $this->resourceClass = $resourceClass;
-        $this->resourceName = $resourceName;
+        parent::__construct($repo, $resourceClass, $resourceName);
         // asumo que todo el que hereda de esta clase lo hace para manejar un usuario y recibe peticiones con token
         $this->getUserFromToken();
+    }
+
+    public function getUserFromToken()
+    {
+        try {
+            $this->user = JWTAuth::parseToken()->authenticate();
+        } catch (JWTException $e) {
+            return $this->sendError('Token error', $e->getMessage());
+        }
     }
 
     /**
@@ -36,17 +43,9 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
      */
     public function index(Request $request)
     {
-        // le paso el indice embed de
-        // http://127.0.0.1:8000/api/v1/videos?fields=id,subject,customer_name,updated_at&state;=open&sort;=-updated_at&embed=user,category
-        // que me indica que relaciones incluir en la devolución
-        try {
-            // añado el id del usuario para filtrar los videos por el
-            $request->merge(['user_id' => $this->user->id]);
-            $objects = $this->repository->all($request->all());
-            return $this->sendResponse($this->resourceClass::collection($objects)->setEmbedRelationships($request->get('embed')), $this->resourceName . ' retrieved successfully');
-        } catch (Exception $e) {
-            return $this->sendError('Get ' . $this->resourceName . ' error', $e->getMessage());
-        }
+        // añado el id del usuario para filtrar los videos por el
+        $request->merge(['user_id' => $this->user->id]);
+        return parent::index($request);
     }
 
     /**
@@ -55,21 +54,9 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
       */
     public function store(Request $request)
     {
-        try {
-            // añado el user_id propietario decodificado del token
-            $request->merge(['user_id' => $this->user->id]);
-            $object = $this->repository->create($request->all());
-            return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' stored successfully');
-            /* } catch (\Watson\Validating\ValidationException $e) {
-                 return $this->sendError('Store ' . $this->resourceName . ' input error', $e->getErrors()->all());
-             } catch (Exception $e) {
-                 return $this->sendError('Store ' . $this->resourceName . ' error', $e->getMessage());
-             }*/
-        } catch (ValidationException $e) { //TRABAJANDO SIN TRAITS VALIDATION EN MODELO Y
-            return $this->sendError('Store ' . $this->resourceName . ' input error', $e->errors());
-        } catch (Exception $e) {
-            return $this->sendError('Store ' . $this->resourceName . ' error', $e->getMessage());
-        }
+        // añado el user_id propietario decodificado del token
+        $request->merge(['user_id' => $this->user->id]);
+        return parent::store($request);
     }
 
     /**
@@ -101,16 +88,8 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
      */
     public function update(Request $request, $id)
     {
-        try {
-            // añado el user_id propietario decodificado del token, asi evito que haga updates de recursos no suyos
-            $request->merge(['user_id' => $this->user->id]);
-            $object = $this->repository->update($request->all(), $id);
-            return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' updated successfully');
-            /* } catch (\Watson\Validating\ValidationException $e) {
-                 return $this->sendError('Update ' . $this->resourceName . ' input error', $e->getErrors()->all());*/
-        } catch (Exception $e) {
-            return $this->sendError('Update ' . $this->resourceName . ' error', $e->getMessage());
-        }
+        $request->merge(['user_id' => $this->user->id]);
+        return parent::update($request, $id);
     }
 
     /**
@@ -130,62 +109,6 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
             return $this->sendResponse([], $this->resourceName . ' deleted successfully');
         } catch (Exception $e) {
             return $this->sendError('Delete ' . $this->resourceName . ' error', $e->getMessage());
-        }
-    }
-
-    /**
-     * success response method.
-     * @return \Illuminate\Http\Response
-     */
-    public function sendResponse($result, $message)
-    {
-        $response = [
-            'success' => true,
-            'data' => $result,
-            'message' => $message,
-        ];
-        return response()->json($response, 200);
-    }
-
-    /**
-     * success response method.
-     * @return \Illuminate\Http\Response
-     */
-    public function sendResponseWithExtraObject($result, $extraObjectName, $extraObject, $message)
-    {
-        $response = [
-            'success' => true,
-            'data' => $result,
-            $extraObjectName => $extraObject,
-            'message' => $message,
-        ];
-        return response()->json($response, 200);
-    }
-
-    /**
-     * return error response.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function sendError($error, $errorMessages = [], $code = 404)
-    {
-        $response = [
-            'success' => false,
-            'message' => $error,
-        ];
-
-        if (!empty($errorMessages)) {
-            $response['data'] = $errorMessages;
-        }
-        return response()->json($response, $code);
-    }
-
-    public function getUserFromToken()
-    {
-        try {
-            $this->user = JWTAuth::parseToken()->authenticate();
-        } catch (JWTException $e) {
-            return $this->sendError('Token error', $e->getMessage());
         }
     }
 }
