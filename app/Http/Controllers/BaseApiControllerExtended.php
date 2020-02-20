@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Interfaces\BaseRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use ReflectionClass;
 
 class BaseAPIControllerExtended extends Controller
 {
@@ -34,7 +34,7 @@ class BaseAPIControllerExtended extends Controller
             $objects = $this->repository->all($request->all());
             return $this->sendResponse($this->resourceClass::collection($objects)->setEmbedRelationships($request->get('embed')), $this->resourceName . ' retrieved successfully');
         } catch (Exception $e) {
-            return $this->sendError('Get ' . $this->resourceName . ' error', $e->getMessage());
+            return $this->handleException('List ' . $this->resourceName . ' error', $e);
         }
     }
 
@@ -44,19 +44,11 @@ class BaseAPIControllerExtended extends Controller
       */
     public function store(Request $request)
     {
-        //$data = json_decode($request->getContent(), true);
         try {
             $object = $this->repository->create($request->all());
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' stored successfully');
-            /* } catch (\Watson\Validating\ValidationException $e) {
-                 return $this->sendError('Store ' . $this->resourceName . ' input error', $e->getErrors()->all());
-             } catch (Exception $e) {
-                 return $this->sendError('Store ' . $this->resourceName . ' error', $e->getMessage());
-             }*/
-        } catch (ValidationException $e) { //TRABAJANDO SIN TRAITS VALIDATION EN MODELO Y
-            return $this->sendError('Store ' . $this->resourceName . ' input error', $e->errors());
         } catch (Exception $e) {
-            return $this->sendError('Store ' . $this->resourceName . ' error', $e->getMessage());
+            return $this->handleException('Store ' . $this->resourceName . ' error', $e);
         }
     }
 
@@ -72,7 +64,7 @@ class BaseAPIControllerExtended extends Controller
             $object = $this->repository->find($id);
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' retrieved successfully');
         } catch (Exception $e) {
-            return $this->sendError('Error obteniendo ' . $this->resourceName, $e->getMessage());
+            return $this->handleException('Show ' . $this->resourceName . ' error', $e);
         }
     }
 
@@ -91,10 +83,8 @@ class BaseAPIControllerExtended extends Controller
         try {
             $object = $this->repository->update($request->all(), $id);
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' updated successfully');
-            /* } catch (\Watson\Validating\ValidationException $e) {
-                 return $this->sendError('Update ' . $this->resourceName . ' input error', $e->getErrors()->all());*/
         } catch (Exception $e) {
-            return $this->sendError('Update ' . $this->resourceName . ' error', $e->getMessage());
+            return $this->handleException('Update ' . $this->resourceName . ' error', $e);
         }
     }
 
@@ -110,37 +100,59 @@ class BaseAPIControllerExtended extends Controller
             $this->repository->delete($id);
             return $this->sendResponse([], $this->resourceName . ' deleted successfully');
         } catch (Exception $e) {
-            return $this->sendError('Delete ' . $this->resourceName . ' error', $e->getMessage());
+            return $this->handleException('Delete ' . $this->resourceName . ' error', $e);
         }
     }
 
-    /**
-     * success response method.
-     * @return \Illuminate\Http\Response
-     */
-    public function sendResponse($result, $message)
+    protected function handleException($mainErrorMessage, Exception $exception)
     {
-        $response = [
-            'success' => true,
-            'data' => $result,
-            'message' => $message,
-        ];
-        return response()->json($response, 200);
+        $exceptionClass = get_class($exception);
+        $reflect = new ReflectionClass($exception);
+        $exceptionClass = $reflect->getShortName();
+        //dd('hello', $exception);
+
+        $code = 400;
+        switch ($exceptionClass) {
+            case 'QueryException':
+                $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+            break;
+            case 'PDOException':
+                $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+            break;
+            case 'Exception':
+                $detailErrorMessage = $exception->getMessage();
+            break;
+            case 'ErrorException':
+                if ($exception->getMessage() == "Trying to get property 'id' of non-object") {
+                    $detailErrorMessage = 'Resource not found';
+                }
+            break;
+            default:
+                $detailErrorMessage = get_class($exception);
+        }
+
+        return $this->sendError($mainErrorMessage, $detailErrorMessage, $code);
     }
 
     /**
      * success response method.
      * @return \Illuminate\Http\Response
      */
-    public function sendResponseWithExtraObject($result, $extraObjectName, $extraObject, $message)
+    public function sendResponse($result, $message, $code = 200)
     {
+        $code = 200;
+        // si no hay recursos => 204 => no permite body
+        if ($result->resource == null) {
+            $code = 404;
+            $message = 'No data available';
+        }
+
         $response = [
             'success' => true,
             'data' => $result,
-            $extraObjectName => $extraObject,
             'message' => $message,
         ];
-        return response()->json($response, 200);
+        return response()->json($response, $code);
     }
 
     /**

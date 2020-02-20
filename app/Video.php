@@ -49,6 +49,16 @@ class Video extends Model
         }
     }
 
+    public function setVideocategoryIdAttribute($value)
+    {
+        
+        if ($value == '' || !is_int($value)) {
+            throw new Exception('videocategory_id must be a valid value');
+        } else {
+            $this->attributes['videocategory_id'] = $value;
+        }
+    }
+
     public function videoCategory()
     {
         return $this->belongsTo('App\VideoCategory', 'videocategory_id');

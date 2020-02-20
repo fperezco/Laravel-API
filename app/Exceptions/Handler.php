@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use ReflectionClass;
 
 class Handler extends ExceptionHandler
 {
@@ -50,6 +51,48 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        if ($exception) {
+            $response = [
+                'success' => false,
+                'message' => 'Error',
+                'data' => $this->exceptionToMessage($exception) . '(' . $exception->getMessage() . ')'
+            ];
+
+            // Default response of 400
+            $code = 400;
+
+            // If this exception is an instance of HttpException
+            if ($this->isHttpException($exception)) {
+                // Grab the HTTP status code from the Exception
+                $code = $exception->getStatusCode();
+            }
+
+            return response()->json($response, $code);
+        }
+
         return parent::render($request, $exception);
+    }
+
+    private function exceptionToMessage($exception)
+    {
+        $exceptionClass = get_class($exception);
+        $reflect = new ReflectionClass($exception);
+        $exceptionClass = $reflect->getShortName();
+        //dd($exceptionClass);
+        switch ($exceptionClass) {
+            case 'NotFoundHttpException':
+                $message = 'Invalid API Route';
+            break;
+            case 'UnauthorizedHttpException':
+                $message = 'Unauthorized Token required';
+            break;
+            case 'MethodNotAllowedHttpException':
+                $message = 'Method not allowed';
+            break;
+            default:
+                $message = get_class($exception);
+        }
+
+        return $message;
     }
 }

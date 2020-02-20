@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Interfaces\BaseRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -13,6 +12,17 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  * un user para su listado y creacion, update, delete y show ya que he de controlar que el user_id del token
  * es realmente el propietario del recurso
  */
+
+ /**
+  * NOTAAAAAAAAA
+  * Realmente podria haber hecho lo mismo en todos los metodos:
+          $request->merge(['user_id' => $this->user->id]);
+        return parent::index($request);
+
+        construyendo un find y un delete que aceptaran parametros
+        como lo hace el all y a correr peeero quedaria un find($arrayParameters)... que realmente solo ha de devolver un registro
+        ¿Como lo llamas? find? where? findOne ¿?tsss
+  */
 class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
 {
     protected $repository;
@@ -31,8 +41,8 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
     {
         try {
             $this->user = JWTAuth::parseToken()->authenticate();
-        } catch (JWTException $e) {
-            return $this->sendError('Token error', $e->getMessage());
+        } catch (Exception $e) {
+            return $this->handleException('Tokeen error', $e);
         }
     }
 
@@ -75,7 +85,7 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
             //$object = $this->repository->find($id);
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' retrieved successfully');
         } catch (Exception $e) {
-            return $this->sendError('Error obteniendo ' . $this->resourceName, $e->getMessage());
+            return $this->handleException('Show ' . $this->resourceName . ' error', $e);
         }
     }
 
@@ -108,7 +118,7 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
             //$this->repository->delete($id);
             return $this->sendResponse([], $this->resourceName . ' deleted successfully');
         } catch (Exception $e) {
-            return $this->sendError('Delete ' . $this->resourceName . ' error', $e->getMessage());
+            return $this->handleException('Delete ' . $this->resourceName . ' error', $e);
         }
     }
 }

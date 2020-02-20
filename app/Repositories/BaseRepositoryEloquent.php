@@ -23,10 +23,15 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
         $this->model = $model;
     }
 
-    //all acepta filtros
+    /**
+     * All method. Could filter, sort and paginate resources
+     *
+     * @param [type] $arrayParameters
+     * @return void
+     * @throws Exception
+     */
     public function all($arrayParameters = null)
     {
-        //dd($arrayParameters);
         $sortArray = [];
         $fieldsArray = '*';
         $filtersArray = [];
