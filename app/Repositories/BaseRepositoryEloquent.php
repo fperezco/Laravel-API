@@ -89,9 +89,22 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
         return $this->model->create($data);
     }
 
+    /**
+     * Undocumented function
+     *
+     * @param array $data
+     * @param [type] $id
+     * @return void
+     * @throws Exception
+     */
     public function update(array $data, $id)
     {
-        $this->model = $this->model::find($id)->fill($data);
+        $this->model = $this->model::find($id);
+        if ($this->model) {
+            $this->model->fill($data);
+        } else {
+            throw new ModelNotFoundException('Not found');
+        }
         return ($this->model->update()) ? $this->model : false;
     }
 
@@ -115,7 +128,24 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
 
     public function findByUserId($id, $userId)
     {
-        return $this->model::where(['id' => $id, 'user_id' => $userId])->first();
+        // return $this->model::where(['id' => $id, 'user_id' => $userId])->first();
+
+        if (null == $model = $this->model::where(['id' => $id, 'user_id' => $userId])->first()) {
+            throw new ModelNotFoundException('Not found');
+        }
+
+        return $model;
+    }
+
+    public function updateByUserId($id, $userId, $data)
+    {
+        // return $this->model::where(['id' => $id, 'user_id' => $userId])->first();
+
+        if (null == $model = $this->model::where(['id' => $id, 'user_id' => $userId])->first()) {
+            throw new ModelNotFoundException('Not found');
+        } else {
+            return $this->update($data, $id);
+        }
     }
 
     public function deleteByUserId($id, $userId)

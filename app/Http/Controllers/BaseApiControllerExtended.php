@@ -6,6 +6,7 @@ use App\Interfaces\BaseRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
 use ReflectionClass;
+use Throwable;
 
 class BaseAPIControllerExtended extends Controller
 {
@@ -83,7 +84,8 @@ class BaseAPIControllerExtended extends Controller
         try {
             $object = $this->repository->update($request->all(), $id);
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' updated successfully');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            //dd('cogiddasdfsafa');
             return $this->handleException('Update ' . $this->resourceName . ' error', $e);
         }
     }
@@ -104,17 +106,31 @@ class BaseAPIControllerExtended extends Controller
         }
     }
 
-    protected function handleException($mainErrorMessage, Exception $exception)
+    protected function handleException($mainErrorMessage, Throwable $exception)
     {
         $exceptionClass = get_class($exception);
         $reflect = new ReflectionClass($exception);
         $exceptionClass = $reflect->getShortName();
-        //dd('hello', $exception);
+        //dd('hello', $exceptionClass);
 
-        $code = 400;
+        $code = 400; // Bad Request
         switch ($exceptionClass) {
+            case 'ModelNotFoundException':
+                $code = 404; //en realidad depende si no es tuyo tendria que ser un 401...
+                $detailErrorMessage = 'no data available';
+            break;
+            case 'TokenInvalidException':
+                $code = 400; //en realidad depende si no es tuyo tendria que ser un 401...
+                $detailErrorMessage = 'tokencin error';
+            break;
             case 'QueryException':
-                $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+                if ($exception->getCode() == 2002) { //error accediendo a BD
+                    $code = 500;
+                    $detailErrorMessage = 'Internal server Error';
+                    $mainErrorMessage = 'Internal server Error';
+                } else {
+                    $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+                }
             break;
             case 'PDOException':
                 $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
@@ -140,19 +156,12 @@ class BaseAPIControllerExtended extends Controller
      */
     public function sendResponse($result, $message, $code = 200)
     {
-        $code = 200;
-        // si no hay recursos => 204 => no permite body
-        if ($result != null && $result->resource == null) {
-            $code = 404;
-            $message = 'No data available';
-        }
-
         $response = [
             'success' => true,
             'data' => $result,
             'message' => $message,
         ];
-        return response()->json($response, $code);
+        return response()->json($response, $code);//->send();
     }
 
     /**
@@ -162,6 +171,7 @@ class BaseAPIControllerExtended extends Controller
      */
     public function sendError($error, $errorMessages = [], $code = 404)
     {
+        //dd('error = ' . $error . '|y erromesagges = ' . $errorMessages . '| y code = ' . $code);
         $response = [
             'success' => false,
             'message' => $error,
@@ -170,6 +180,7 @@ class BaseAPIControllerExtended extends Controller
         if (!empty($errorMessages)) {
             $response['data'] = $errorMessages;
         }
-        return response()->json($response, $code);
+
+        return response()->json($response, $code);//->send();
     }
 }

@@ -51,8 +51,7 @@ class Video extends Model
 
     public function setVideocategoryIdAttribute($value)
     {
-        
-        if ($value == '' || !is_int($value)) {
+        if ($value == '' || !is_numeric($value)) {
             throw new Exception('videocategory_id must be a valid value');
         } else {
             $this->attributes['videocategory_id'] = $value;

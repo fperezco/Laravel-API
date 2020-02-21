@@ -51,6 +51,8 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        //dd($exception);
+
         if ($exception) {
             $response = [
                 'success' => false,
@@ -59,18 +61,21 @@ class Handler extends ExceptionHandler
             ];
 
             // Default response of 400
-            $code = 400;
+            //$code = 400;
 
             // If this exception is an instance of HttpException
             if ($this->isHttpException($exception)) {
                 // Grab the HTTP status code from the Exception
                 $code = $exception->getStatusCode();
+            //$code = 405;
+            } else {
+                $code = 400;
             }
 
-            return response()->json($response, $code);
+            return response()->json($response, $code); //ojo pacoo comentado
         }
 
-        return parent::render($request, $exception);
+        return parent::render($request, $exception); //ojo paco comentado
     }
 
     private function exceptionToMessage($exception)
@@ -88,6 +93,18 @@ class Handler extends ExceptionHandler
             break;
             case 'MethodNotAllowedHttpException':
                 $message = 'Method not allowed';
+                // no break
+            case 'JWTException':
+                $message = 'Tokencito Error';
+                //dd('toma');
+            break;
+            case 'TokenInvalidException':
+                $message = 'Tokencito Error';
+                //dd('toma');
+            break;
+            case 'TokenBlacklistedException':
+                $message = 'Tokencito Error';
+                //dd('toma');
             break;
             default:
                 $message = get_class($exception);

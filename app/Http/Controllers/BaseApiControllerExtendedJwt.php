@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Interfaces\BaseRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
+use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -32,16 +33,20 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
 
     public function __construct(BaseRepositoryInterface $repo, $resourceClass, $resourceName)
     {
+        //echo 'hola';
+        //echo 'hola';
         parent::__construct($repo, $resourceClass, $resourceName);
         // asumo que todo el que hereda de esta clase lo hace para manejar un usuario y recibe peticiones con token
         $this->getUserFromToken();
+        //OJO SI LO CACHEO AKI LUEGO SIGUE LA EJECUCION EN EL INDEX Y SE VA  TO AL CARAJO
+        //$this->user = JWTAuth::parseToken()->authenticate();
     }
 
     public function getUserFromToken()
     {
         try {
             $this->user = JWTAuth::parseToken()->authenticate();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->handleException('Tokeen error', $e);
         }
     }
@@ -53,6 +58,7 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
      */
     public function index(Request $request)
     {
+        //dd("index");
         // añado el id del usuario para filtrar los videos por el
         $request->merge(['user_id' => $this->user->id]);
         return parent::index($request);
@@ -83,8 +89,9 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
             // añado el user_id propietario decodificado del token
             $object = $this->repository->findByUserId($id, $this->user->id);
             //$object = $this->repository->find($id);
+
             return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' retrieved successfully');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->handleException('Show ' . $this->resourceName . ' error', $e);
         }
     }
@@ -98,8 +105,21 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
      */
     public function update(Request $request, $id)
     {
-        $request->merge(['user_id' => $this->user->id]);
-        return parent::update($request, $id);
+        //$request->merge(['user_id' => $this->user->id]);
+        //updateByUserId($id, $userId, $data)
+        //return parent::update($request, $id);
+
+        try {
+            // como prevengo que un usuario haga peticiones a recursos que no son suyos?? => cambio el find por un where e inyecto como querie el user_id
+            // asi un usuario no puede ver los objetos de otro
+            // añado el user_id propietario decodificado del token
+            $object = $this->repository->updateByUserId($id, $this->user->id, $request->all());
+            //$object = $this->repository->find($id);
+
+            return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' retrieved successfully');
+        } catch (Throwable $e) {
+            return $this->handleException('Update ' . $this->resourceName . ' error', $e);
+        }
     }
 
     /**

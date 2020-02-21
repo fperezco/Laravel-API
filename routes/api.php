@@ -16,6 +16,7 @@ use App\Video;
 Route::group(['prefix' => 'v1'], function () {
     // RUTAS LIBRES
     Route::post('login', 'LoginController@login');
+    Route::post('logout', 'LoginController@logout');
     Route::get('about', function () {
         return json_encode('REST vacio con info del servidor accesible para todos');
     });
