@@ -142,7 +142,7 @@ class BaseAPIControllerExtended extends Controller
     {
         $code = 200;
         // si no hay recursos => 204 => no permite body
-        if ($result->resource == null) {
+        if ($result != null && $result->resource == null) {
             $code = 404;
             $message = 'No data available';
         }
