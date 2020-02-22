@@ -19,6 +19,9 @@ interface BaseRepositoryInterface
     //for JWT object custom
     public function findByUserId($id, $userId);
 
+    // findOne by Parameters alternative for JWT
+    public function findOne($arrayParameters);
+
     //for JWT object custom
     public function deleteByUserId($id, $userId);
 }

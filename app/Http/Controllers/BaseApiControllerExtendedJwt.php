@@ -37,11 +37,12 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
         //echo 'hola';
         parent::__construct($repo, $resourceClass, $resourceName);
         // asumo que todo el que hereda de esta clase lo hace para manejar un usuario y recibe peticiones con token
-        $this->getUserFromToken();
-        //OJO SI LO CACHEO AKI LUEGO SIGUE LA EJECUCION EN EL INDEX Y SE VA  TO AL CARAJO
-        //$this->user = JWTAuth::parseToken()->authenticate();
+        // finalmente no cacheo esta sentencia, de producirse
+        // una expcecion se gestiona en el metodo render de Handler.php
+        $this->user = JWTAuth::parseToken()->authenticate();
     }
 
+    // not used
     public function getUserFromToken()
     {
         try {
@@ -58,7 +59,6 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
      */
     public function index(Request $request)
     {
-        //dd("index");
         // añado el id del usuario para filtrar los videos por el
         $request->merge(['user_id' => $this->user->id]);
         return parent::index($request);
@@ -116,7 +116,7 @@ class BaseAPIControllerExtendedJwt extends BaseAPIControllerExtended
             $object = $this->repository->updateByUserId($id, $this->user->id, $request->all());
             //$object = $this->repository->find($id);
 
-            return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' retrieved successfully');
+            return $this->sendResponse(new $this->resourceClass($object), $this->resourceName . ' updated successfully');
         } catch (Throwable $e) {
             return $this->handleException('Update ' . $this->resourceName . ' error', $e);
         }

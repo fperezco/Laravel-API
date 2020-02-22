@@ -11,7 +11,9 @@
 |
 */
 
-use App\Video;
+use App\Repositories\UserRepositoryEloquent;
+use App\User;
+use Illuminate\Support\Facades\Hash;
 
 Route::group(['prefix' => 'v1'], function () {
     // RUTAS LIBRES
@@ -52,6 +54,13 @@ Route::group(['prefix' => 'v1'], function () {
     //Route::apiResource('videos', 'VideoController');
 
     Route::get('test', function () {
-        dd(Video::where(['id' => 13, 'user_id' => 1])->get());
+        $user = new User();
+        $user->name = 'testuser';
+        $user->surname = 'testuser';
+        $user->email = 'test@user.com';
+        $user->password = Hash::make('password');
+        //lo almacenamos via repositorio
+        $repo = new UserRepositoryEloquent(new User());
+        $repo->create($user->toArray());
     });
 });

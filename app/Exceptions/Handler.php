@@ -51,65 +51,93 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        //dd($exception);
+        //dd('en render', $exception);
 
         if ($exception) {
-            $response = [
-                'success' => false,
-                'message' => 'Error',
-                'data' => $this->exceptionToMessage($exception) . '(' . $exception->getMessage() . ')'
-            ];
-
-            // Default response of 400
-            //$code = 400;
-
-            // If this exception is an instance of HttpException
-            if ($this->isHttpException($exception)) {
-                // Grab the HTTP status code from the Exception
-                $code = $exception->getStatusCode();
-            //$code = 405;
-            } else {
-                $code = 400;
-            }
-
-            return response()->json($response, $code); //ojo pacoo comentado
+            $fullResponse = $this->getDetailResponseFromException($exception);
+            $response = $fullResponse['response'];
+            $code = $fullResponse['code'];
+            return response()->json($response, $code);
         }
 
-        return parent::render($request, $exception); //ojo paco comentado
+        return parent::render($request, $exception);
     }
 
-    private function exceptionToMessage($exception)
+    /**
+     * Return the class of the exception
+     *
+     * @param [type] $exception
+     * @return void
+     */
+    private function getExceptionClass($exception)
     {
         $exceptionClass = get_class($exception);
         $reflect = new ReflectionClass($exception);
         $exceptionClass = $reflect->getShortName();
-        //dd($exceptionClass);
+        return $exceptionClass;
+    }
+
+    private function getDetailResponseFromException($exception)
+    {
+        $exceptionClass = $this->getExceptionClass($exception);
+
+        $code = 401;
+        $message = 'Exception';
         switch ($exceptionClass) {
-            case 'NotFoundHttpException':
-                $message = 'Invalid API Route';
+            case 'HttpException':
+                $message = 'Http Exception**';
+                $code = $exception->getStatusCode();
             break;
-            case 'UnauthorizedHttpException':
-                $message = 'Unauthorized Token required';
+            case 'NotFoundHttpException':
+                $message = 'Invalid API Route**';
+                $code = 404;
             break;
             case 'MethodNotAllowedHttpException':
-                $message = 'Method not allowed';
-                // no break
+                $message = 'Method not allowed**';
+            break;
+            case 'UnauthorizedHttpException':
+                $message = 'Unauthorized Error**';
+            break;
             case 'JWTException':
-                $message = 'Tokencito Error';
-                //dd('toma');
+                $message = 'Token Error**';
+            break;
+            case 'TokenExpiredException':
+                  $message = 'Expired Token**';
             break;
             case 'TokenInvalidException':
-                $message = 'Tokencito Error';
-                //dd('toma');
+                $message = 'Invalid Token**';
             break;
             case 'TokenBlacklistedException':
-                $message = 'Tokencito Error';
-                //dd('toma');
+                $message = 'Blacklisted Token**';
+            break;
+            case 'QueryException': //pk obtener el token tb implica una consulta a la BD
+                $code = 500;
+                if ($exception->getCode() == 2002) { //error accediendo a BD
+                    $message = 'Internal server Error';
+                } else {
+                    $message = $exception->getPrevious()->errorInfo[2];
+                }
             break;
             default:
                 $message = get_class($exception);
         }
 
-        return $message;
+        if ($exception->getMessage()) {
+            //$data = $message . '(' . $exception->getMessage() . ')';
+            $data = $message;
+        } else {
+            $data = $message;
+        }
+
+        $fullResponse = [
+            'code' => $code,
+            'response' => [
+                'success' => false,
+                'message' => 'Error',
+                'data' => $data
+            ]
+        ];
+
+        return $fullResponse;
     }
 }

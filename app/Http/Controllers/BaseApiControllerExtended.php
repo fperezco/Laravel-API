@@ -106,41 +106,47 @@ class BaseAPIControllerExtended extends Controller
         }
     }
 
+    /**
+     * Maneja las excepciones con el manejo de los datos
+     * las mas generales como token, rutas invalidas y demás
+     * son gestionadas en el metodo render de Handler.php
+     *
+     * @param [type] $mainErrorMessage
+     * @param Throwable $exception
+     * @return void
+     */
     protected function handleException($mainErrorMessage, Throwable $exception)
     {
         $exceptionClass = get_class($exception);
         $reflect = new ReflectionClass($exception);
         $exceptionClass = $reflect->getShortName();
-        //dd('hello', $exceptionClass);
+        //dd('en custom handler', $exception);
+        //dd('en custom handler', $exceptionClass);
 
         $code = 400; // Bad Request
         switch ($exceptionClass) {
             case 'ModelNotFoundException':
                 $code = 404; //en realidad depende si no es tuyo tendria que ser un 401...
-                $detailErrorMessage = 'no data available';
-            break;
-            case 'TokenInvalidException':
-                $code = 400; //en realidad depende si no es tuyo tendria que ser un 401...
-                $detailErrorMessage = 'tokencin error';
+                $detailErrorMessage = 'no data available1';
             break;
             case 'QueryException':
                 if ($exception->getCode() == 2002) { //error accediendo a BD
                     $code = 500;
                     $detailErrorMessage = 'Internal server Error';
-                    $mainErrorMessage = 'Internal server Error';
+                    $mainErrorMessage = 'Internal server Error1';
                 } else {
-                    $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+                    $detailErrorMessage = $exception->getPrevious()->errorInfo[2] . '1';
                 }
             break;
             case 'PDOException':
-                $detailErrorMessage = $exception->getPrevious()->errorInfo[2];
+                $detailErrorMessage = $exception->getPrevious()->errorInfo[2] . '1';
             break;
             case 'Exception':
-                $detailErrorMessage = $exception->getMessage();
+                $detailErrorMessage = $exception->getMessage() . '1';
             break;
             case 'ErrorException':
                 if ($exception->getMessage() == "Trying to get property 'id' of non-object") {
-                    $detailErrorMessage = 'Resource not found';
+                    $detailErrorMessage = 'Resource not found1';
                 }
             break;
             default:

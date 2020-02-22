@@ -126,6 +126,16 @@ abstract class BaseRepositoryEloquent implements BaseRepositoryInterface
         return $model;
     }
 
+    // findOne by Parameters alternative for JWT
+    public function findOne($arrayParameters)
+    {
+        if (null == $model = $this->model::where($arrayParameters)->first()) {
+            throw new ModelNotFoundException('Not found');
+        }
+
+        return $model;
+    }
+
     public function findByUserId($id, $userId)
     {
         // return $this->model::where(['id' => $id, 'user_id' => $userId])->first();
